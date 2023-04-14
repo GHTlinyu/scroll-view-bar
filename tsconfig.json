@@ -12,5 +12,5 @@
       "scroll-view-bar/*": ["src/*", "*"]
     }
   },
-  "include": [".dumi/**/*", ".dumirc.ts", "src/**/*"]
+  "include": [".dumi/**/*", ".dumirc.ts", "src/**/*", "docs/**/*"]
 }

@@ -1,8 +1,14 @@
 import { defineConfig } from 'dumi';
+import path from 'path';
 
 export default defineConfig({
-  outputPath: 'docs-dist',
+  alias: {
+    'scroll-view-bar$': path.resolve('src'),
+  },
+  mfsu: false,
+  favicons: ['https://avatars0.githubusercontent.com/u/9441414?s=200&v=4'],
   themeConfig: {
+    logo: 'https://avatars0.githubusercontent.com/u/9441414?s=200&v=4',
     name: 'scroll-view-bar',
   },
 });
