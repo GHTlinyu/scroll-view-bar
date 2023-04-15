@@ -1,6 +1,6 @@
 {
   "name": "scroll-view-bar",
-  "version": "0.1.0",
+  "version": "0.0.1",
   "description": "Scroll bar with thumbnail background similar to vscode",
   "license": "MIT",
   "module": "dist/index.js",
@@ -44,6 +44,7 @@
     ]
   },
   "dependencies": {
+    "@babel/runtime": "^7.21.0",
     "classnames": "^2.3.2",
     "html2canvas": "^1.4.1",
     "raf": "^3.4.1",
