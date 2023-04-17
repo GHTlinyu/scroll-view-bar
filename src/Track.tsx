@@ -202,8 +202,8 @@ const Track = (props: TrackProps, ref: React.Ref<TrackRef>) => {
           }
 
           //删除other节点
-          if (otherRef.current) {
-            otherRef.current.remove();
+          if (otherRef.current.hasChildNodes()) {
+            // otherRef.current.innerHTML = '';
           }
         } else {
           setImageState({ loading: false, src64: '' });
@@ -215,7 +215,7 @@ const Track = (props: TrackProps, ref: React.Ref<TrackRef>) => {
     //初始化
     //获取滚动条高度
     fetchCanvas();
-  }, []);
+  }, [children]);
 
   useEffect(() => {
     //获取浏览器默认滚动栏宽度
@@ -351,7 +351,7 @@ const Track = (props: TrackProps, ref: React.Ref<TrackRef>) => {
   return (
     <>
       <div ref={otherRef} style={{ position: 'fixed', top: -9999 }}>
-        <div>{children}</div>
+        {children}
       </div>
       <div
         ref={trackRef}
