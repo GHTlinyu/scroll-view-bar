@@ -11,7 +11,7 @@
     "react",
     "scrollviewbar"
   ],
-  "homepage": "https://github.com/GHTlinyu/scroll-view-bar",
+  "homepage": "https://scroll-view-bar.vercel.app/",
   "bugs": {
     "url": "https://github.com/GHTlinyu/scroll-view-bar/issues"
   },
