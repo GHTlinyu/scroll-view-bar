@@ -19,7 +19,7 @@ npm install scroll-view-bar --save
 import ScrollViewBar from 'scroll-view-bar';
 
 export default () => (
-  <ScrollViewBar>
+  <ScrollViewBar style={{height:300}}>
     <div>content<div>
   </ScrollViewBar>
 );
