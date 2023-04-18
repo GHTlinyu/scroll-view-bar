@@ -1,12 +1,11 @@
 import classNames from 'classnames';
-import html2canvas from 'html2canvas';
 import raf from 'raf';
 import React, {
   CSSProperties,
   useEffect,
   useImperativeHandle,
+  useMemo,
   useRef,
-  useState,
 } from 'react';
 import getInnerHeight from './util/getInnerHeight';
 import getScrollBarWidth from './util/getScrollBarWidth';
@@ -17,6 +16,11 @@ export interface TrackProps {
   trackWidth: number;
   viewRef: React.RefObject<HTMLDivElement>;
   scrollBarWidth: number;
+  imgState: {
+    loading: boolean;
+    imgSrc: string;
+    imageHeight: number;
+  };
   onScrollBarWidthChange: React.Dispatch<React.SetStateAction<number>>;
   children?: React.ReactNode;
   trackStyle?: CSSProperties;
@@ -39,11 +43,11 @@ const Track = (props: TrackProps, ref: React.Ref<TrackRef>) => {
     scrollBarWidth,
     onScrollBarWidthChange,
     trackWidth,
-    children,
     trackStyle: customTrackStyle,
     thumbStyle: customThumbStyle,
     trackLoding = 'loading',
     onUpdate,
+    imgState,
   } = props;
 
   const imageRef = useRef<HTMLImageElement>(null);
@@ -57,13 +61,6 @@ const Track = (props: TrackProps, ref: React.Ref<TrackRef>) => {
   //记录滚动栏内部图片上边框到可视窗口的top
   const preTop = useRef(0);
   const wheelOffset = useRef(0);
-  const otherRef = useRef<HTMLDivElement>(null);
-
-  const [thumbState, setThumbState] = useState({
-    thumbHeight: 0,
-  });
-
-  const [imageState, setImageState] = useState({ loading: false, src64: '' });
 
   const handleDrag = (event: MouseEvent) => {
     const { clientY } = event;
@@ -175,49 +172,6 @@ const Track = (props: TrackProps, ref: React.Ref<TrackRef>) => {
   };
 
   useEffect(() => {
-    const fetchCanvas = async () => {
-      try {
-        setImageState((pre) => ({ ...pre, loading: true }));
-        if (otherRef.current) {
-          const htmlCanvas = await html2canvas(otherRef.current);
-          const ctx = htmlCanvas.getContext('2d');
-          if (ctx) {
-            //让图片模糊显示
-            ctx.imageSmoothingEnabled = false;
-          }
-          const src64 = htmlCanvas.toDataURL();
-          setImageState({ loading: false, src64 });
-          const imageHeight =
-            (htmlCanvas.height * trackWidth) / htmlCanvas.width;
-          if (viewRef.current) {
-            const { scrollHeight, clientHeight } = viewRef.current;
-            const height =
-              Math.ceil((clientHeight / scrollHeight) * imageHeight) ?? 0;
-            if (imageHeight === height) return 0;
-            //获取滚动条的高度，最小高度为30
-            setThumbState((pre) => ({
-              ...pre,
-              thumbHeight: Math.max(height, 30),
-            }));
-          }
-
-          //删除other节点
-          if (otherRef.current.hasChildNodes()) {
-            // otherRef.current.innerHTML = '';
-          }
-        } else {
-          setImageState({ loading: false, src64: '' });
-        }
-      } catch (error) {
-        setImageState({ loading: false, src64: '' });
-      }
-    };
-    //初始化
-    //获取滚动条高度
-    fetchCanvas();
-  }, [children]);
-
-  useEffect(() => {
     //获取浏览器默认滚动栏宽度
     const freshScrollbarWidth = getScrollBarWidth();
     if (scrollBarWidth !== freshScrollbarWidth) {
@@ -290,10 +244,13 @@ const Track = (props: TrackProps, ref: React.Ref<TrackRef>) => {
         trackVerticalHeight = getInnerHeight(imageRef.current);
       }
 
-      const thumbHeight = getThumbHeight(viewRef.current, imageRef.current);
+      const thumbVerticalHeight = getThumbHeight(
+        viewRef.current,
+        imageRef.current,
+      );
       const thumbVerticalY =
         (scrollTop / (scrollHeight - clientHeight)) *
-        (trackVerticalHeight - thumbHeight);
+        (trackVerticalHeight - thumbVerticalHeight);
       if (thumbRef.current) {
         thumbRef.current.style.transform = `translateY(${thumbVerticalY}px)`;
       }
@@ -319,6 +276,21 @@ const Track = (props: TrackProps, ref: React.Ref<TrackRef>) => {
 
   useImperativeHandle(ref, () => ({ handleScroll }), []);
 
+  const thumbHeight = useMemo(() => {
+    if (!imgState.loading && viewRef.current && trackRef.current) {
+      const { scrollHeight } = viewRef.current;
+      const { clientHeight } = trackRef.current;
+      if (clientHeight > scrollHeight) {
+        return 0;
+      }
+      let height =
+        Math.ceil((clientHeight / scrollHeight) * imgState.imageHeight) ?? 0;
+      if (imgState.imageHeight === height) height = 0;
+      return Math.max(height, 30);
+    }
+    return 0;
+  }, [imgState]);
+
   const trackStyle: React.CSSProperties = {
     position: 'absolute',
     right: 0,
@@ -341,7 +313,7 @@ const Track = (props: TrackProps, ref: React.Ref<TrackRef>) => {
   const thumbStyle: React.CSSProperties = {
     position: 'relative',
     display: 'block',
-    height: thumbState.thumbHeight,
+    height: thumbHeight,
     cursor: 'pointer',
     borderRadius: 'inherit',
     background: 'rgba(0,0,0,.2)',
@@ -350,25 +322,22 @@ const Track = (props: TrackProps, ref: React.Ref<TrackRef>) => {
 
   return (
     <>
-      <div ref={otherRef} style={{ position: 'fixed', top: -9999 }}>
-        {children}
-      </div>
       <div
         ref={trackRef}
         className={classNames([`${prefixCls}-track`])}
         style={trackStyle}
       >
         <div ref={imageWrapperRef} style={imageWrapperStyle}>
-          {imageState.loading ? (
+          {imgState.loading ? (
             trackLoding
-          ) : imageState.src64 !== '' ? (
+          ) : imgState.imgSrc !== '' ? (
             <img
               style={{
                 width: 'inherit',
                 userSelect: 'none',
               }}
               crossOrigin="anonymous"
-              src={imageState.src64}
+              src={imgState.imgSrc}
               ref={imageRef}
             />
           ) : (
