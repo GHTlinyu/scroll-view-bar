@@ -19,7 +19,7 @@ npm install scroll-view-bar --save
 import ScrollViewBar from 'scroll-view-bar';
 
 export default () => (
-  <ScrollViewBar style={{height:300}}>
+  <ScrollViewBar style={{height:300}} trigger={true}>
     <div>content<div>
   </ScrollViewBar>
 );
@@ -30,7 +30,8 @@ export default () => (
 | Property    | Type                                                                                      | Default         | Description                                                      |
 | ----------- | ----------------------------------------------------------------------------------------- | --------------- | ---------------------------------------------------------------- |
 | prefixCls   | String                                                                                    | scroll-view-bar | prefixCls of this component                                      |
-| autoHeight  | boolean                                                                                   | false           | enable auto-height mode                                          |
+| trigger     | boolean                                                                                   | false           | trigger generate track                                           |
+| autoHeight  | boolean                                                                                   | false           | (deprecated) enable auto-height mode                             |
 | trackWidth  | number                                                                                    | 160             | scroll-track width                                               |
 | trackStyle  | CSSProperties                                                                             | scroll-view-bar | customize track style                                            |
 | thumbStyle  | CSSProperties                                                                             | scroll-view-bar | customize thumb style                                            |

@@ -22,7 +22,7 @@ const ViewChange = () => {
             setSelected(key);
           }}
         >
-          按钮{key}
+          btn{key}
         </div>
       );
     });

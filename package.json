@@ -1,6 +1,6 @@
 {
   "name": "scroll-view-bar",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Scroll bar with thumbnail background similar to vscode",
   "keywords": [
     "scroll",
@@ -11,7 +11,7 @@
     "react",
     "scrollviewbar"
   ],
-  "homepage": "https://github.com/GHTlinyu/scroll-view-bar",
+  "homepage": "https://scroll-view-bar.vercel.app/",
   "bugs": {
     "url": "https://github.com/GHTlinyu/scroll-view-bar/issues"
   },
