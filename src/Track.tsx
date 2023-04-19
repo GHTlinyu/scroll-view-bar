@@ -45,7 +45,7 @@ const Track = (props: TrackProps, ref: React.Ref<TrackRef>) => {
     trackWidth,
     trackStyle: customTrackStyle,
     thumbStyle: customThumbStyle,
-    trackLoding = 'loading',
+    trackLoding,
     onUpdate,
     imgState,
   } = props;
@@ -280,7 +280,7 @@ const Track = (props: TrackProps, ref: React.Ref<TrackRef>) => {
     if (!imgState.loading && viewRef.current && trackRef.current) {
       const { scrollHeight } = viewRef.current;
       const { clientHeight } = trackRef.current;
-      if (clientHeight > scrollHeight) {
+      if (clientHeight >= scrollHeight) {
         return 0;
       }
       let height =

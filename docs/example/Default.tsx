@@ -21,7 +21,7 @@ const Default = () => {
     <div>
       <div style={{ display: 'flex', flexDirection: 'row' }}>
         <span>
-          是否激活：
+          Use component：
           <span
             style={{
               width: 70,
@@ -36,14 +36,14 @@ const Default = () => {
               setUsed((pre) => !pre);
             }}
           >
-            {used ? '是' : '否'}
+            {used ? 'yes' : 'no'}
           </span>
         </span>
         {used ? (
           <>
             <span
               style={{
-                width: 80,
+                width: 120,
                 borderRadius: 7,
                 cursor: 'pointer',
                 background: '#d2cfcb',
@@ -56,11 +56,11 @@ const Default = () => {
                 setUseLongView(false);
               }}
             >
-              正常内容
+              short content
             </span>
             <span
               style={{
-                width: 80,
+                width: 120,
                 borderRadius: 7,
                 cursor: 'pointer',
                 background: '#d2cfcb',
@@ -73,7 +73,7 @@ const Default = () => {
                 setUseLongView(true);
               }}
             >
-              内容过长
+              long content
             </span>
           </>
         ) : (

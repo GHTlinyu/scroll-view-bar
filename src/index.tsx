@@ -1,16 +1,21 @@
 import classNames from 'classnames';
 import html2canvas from 'html2canvas';
 import ResizeObserver from 'rc-resize-observer';
-import React, { CSSProperties, useEffect, useRef, useState } from 'react';
+import React, {
+  CSSProperties,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import Track from './Track';
 import getScrollBarWidth from './util/getScrollBarWidth';
 
-type Trigger = () => boolean;
+type Trigger = boolean;
 
 export interface ScrollViewBarProps
   extends React.HTMLAttributes<HTMLDivElement> {
   prefixCls?: string;
-  autoHeight?: boolean;
   trackWidth?: number;
   trackStyle?: CSSProperties;
   thumbStyle?: CSSProperties;
@@ -27,15 +32,15 @@ export interface ScrollViewBarProps
 const ScrollViewBar = (props: ScrollViewBarProps) => {
   const {
     prefixCls = 'scroll-view-bar',
-    autoHeight = false,
     children,
     style,
     className,
     trackWidth = 160,
     trackStyle,
     thumbStyle,
-    trackLoding,
+    trackLoding = 'loading',
     onUpdate,
+    trigger = false,
     ...rest
   } = props;
 
@@ -48,7 +53,7 @@ const ScrollViewBar = (props: ScrollViewBarProps) => {
     loading: boolean;
     imgSrc: string;
     imageHeight: number;
-  }>({ loading: true, imgSrc: '', imageHeight: 0 });
+  }>({ loading: false, imgSrc: '', imageHeight: 0 });
 
   useEffect(() => {
     const fetchCanvas = async () => {
@@ -59,9 +64,9 @@ const ScrollViewBar = (props: ScrollViewBarProps) => {
         }));
         if (viewRef.current) {
           //处理dom
-          // viewRef.current.style.position = 'absolute';
-          // viewRef.current.style.top = '-9999px';
-
+          viewRef.current.style.position = 'absolute';
+          viewRef.current.style.bottom = 'auto';
+          //截图
           const htmlCanvas = await html2canvas(viewRef.current);
           const ctx = htmlCanvas.getContext('2d');
           if (ctx) {
@@ -71,8 +76,10 @@ const ScrollViewBar = (props: ScrollViewBarProps) => {
           const src64 = htmlCanvas.toDataURL();
           const imageHeight =
             (htmlCanvas.height * trackWidth) / htmlCanvas.width;
-          // viewRef.current.style.position = 'absolute';
-          // viewRef.current.style.top = '0px';
+
+          //处理dom
+          viewRef.current.style.position = 'absolute';
+          viewRef.current.style.bottom = '0';
           //获取滚动条的高度，最小高度为30
           setTrackCanvas({
             loading: false,
@@ -94,9 +101,10 @@ const ScrollViewBar = (props: ScrollViewBarProps) => {
         });
       }
     };
-
-    fetchCanvas();
-  }, [children]);
+    if (typeof trigger === 'boolean' && trigger) {
+      fetchCanvas();
+    }
+  }, [trigger]);
 
   const handleScroll = () => {
     if (trackRef.current) trackRef.current.handleScroll();
@@ -118,32 +126,20 @@ const ScrollViewBar = (props: ScrollViewBarProps) => {
     overflow: 'hidden',
     width: '100%',
     height: '100%',
-    ...(autoHeight && { minHeight: 0, maxHeight: 300, height: 'auto' }),
     ...style,
   };
 
-  const viewStyle: React.CSSProperties = trackCanvas.loading
-    ? { position: 'absolute', top: -9999 }
-    : {
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        overflow: 'scroll',
-        //隐藏原生滚动条
-        marginRight: -scrollBarWidth,
-        marginBottom: -scrollBarWidth,
-        ...(autoHeight && {
-          position: 'relative',
-          top: undefined,
-          left: undefined,
-          right: undefined,
-          bottom: undefined,
-          minHeight: 0 + scrollBarWidth,
-          maxHeight: 300 + scrollBarWidth,
-        }),
-      };
+  const viewStyle: React.CSSProperties = {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    overflow: 'scroll',
+    //隐藏原生滚动条
+    marginRight: -scrollBarWidth,
+    marginBottom: -scrollBarWidth,
+  };
 
   const fakeLoadingStyle: React.CSSProperties = {
     position: 'absolute',
@@ -152,10 +148,30 @@ const ScrollViewBar = (props: ScrollViewBarProps) => {
     left: 0,
     right: 0,
     bottom: 0,
-    ...(autoHeight && { minHeight: 0, maxHeight: 300, height: 'auto' }),
     zIndex: trackCanvas.loading ? 1 : 0,
     display: trackCanvas.loading ? 'block' : 'none',
   };
+
+  const node = useMemo(() => {
+    if (typeof trigger === 'boolean' && trigger) {
+      return (
+        <Track
+          ref={trackRef}
+          trackWidth={trackWidth}
+          prefixCls={prefixCls}
+          viewRef={viewRef}
+          scrollBarWidth={scrollBarWidth}
+          onScrollBarWidthChange={setScrollBarWidth}
+          trackStyle={trackStyle}
+          thumbStyle={thumbStyle}
+          trackLoding={trackLoding}
+          onUpdate={onUpdate}
+          imgState={trackCanvas}
+        ></Track>
+      );
+    }
+    return '';
+  }, [trigger, trackCanvas]);
 
   return (
     <ResizeObserver onResize={() => {}}>
@@ -169,7 +185,7 @@ const ScrollViewBar = (props: ScrollViewBarProps) => {
           className={classNames([`${prefixCls}-fake-loading`])}
           style={fakeLoadingStyle}
         >
-          loading
+          {trackLoding}
         </div>
         <div
           ref={viewRef}
@@ -178,21 +194,7 @@ const ScrollViewBar = (props: ScrollViewBarProps) => {
         >
           {children}
         </div>
-        <Track
-          ref={trackRef}
-          trackWidth={trackWidth}
-          prefixCls={prefixCls}
-          viewRef={viewRef}
-          scrollBarWidth={scrollBarWidth}
-          onScrollBarWidthChange={setScrollBarWidth}
-          trackStyle={trackStyle}
-          thumbStyle={thumbStyle}
-          trackLoding={trackLoding}
-          onUpdate={onUpdate}
-          imgState={trackCanvas}
-        >
-          {children}
-        </Track>
+        {node}
       </div>
     </ResizeObserver>
   );

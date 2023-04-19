@@ -165,7 +165,9 @@ const DelayView = () => {
           按钮
         </div>
       </div>
-      <ScrollViewBar style={{ height: 300 }}>{data}</ScrollViewBar>
+      <ScrollViewBar style={{ height: 300 }} trigger={true}>
+        {data}
+      </ScrollViewBar>
     </div>
   );
 };
