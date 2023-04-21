@@ -3,7 +3,11 @@
 [![NPM version](https://img.shields.io/npm/v/scroll-view-bar.svg?style=flat)](https://npmjs.org/package/scroll-view-bar)
 [![NPM downloads](http://img.shields.io/npm/dm/scroll-view-bar.svg?style=flat)](https://npmjs.org/package/scroll-view-bar)
 
-Scroll bar with thumbnail background similar to vscode
+Scroll bar with thumbnail background, similar to vscode side navigation
+
+- Support for listening to the status of the scrollbar being generated
+- Support custom scrollbar styles
+- Consider using [sidehoverbtn](https://github.com/GHTlinyu/scroll-view-bar/blob/master/docs/demo.md#docs-demo-demo-sidehoverbtn) if your page loads more than once
 
 ![](https://raw.githubusercontent.com/GHTlinyu/images/master/img/scrollViewBar.gif)
 
@@ -27,16 +31,16 @@ export default () => (
 
 ## API
 
-| Property    | Type                                                                                      | Default         | Description                                                      |
-| ----------- | ----------------------------------------------------------------------------------------- | --------------- | ---------------------------------------------------------------- |
-| prefixCls   | String                                                                                    | scroll-view-bar | prefixCls of this component                                      |
-| trigger     | boolean                                                                                   | false           | trigger generate track                                           |
-| autoHeight  | boolean                                                                                   | false           | (deprecated) enable auto-height mode                             |
-| trackWidth  | number                                                                                    | 160             | scroll-track width                                               |
-| trackStyle  | CSSProperties                                                                             | scroll-view-bar | customize track style                                            |
-| thumbStyle  | CSSProperties                                                                             | scroll-view-bar | customize thumb style                                            |
-| trackLoding | ReactNode                                                                                 | loading         | the state component when the background image is being generated |
-| onUpdate    | (value: {top: number;scrollTop: number;scrollHeight: number;clientHeight: number;})=>void |                 | call when scrolling                                              |
+| Property          | Type                                                                                      | Default         | Description                                                                             |
+| ----------------- | ----------------------------------------------------------------------------------------- | --------------- | --------------------------------------------------------------------------------------- |
+| prefixCls         | String                                                                                    | scroll-view-bar | prefixCls of this component                                                             |
+| trigger           | boolean                                                                                   | false           | trigger generate track                                                                  |
+| onLoading         | (loading: boolean)=>void                                                                  |                 | detecting loading                                                                       |
+| trackWidth        | number                                                                                    | 160             | scroll-track width                                                                      |
+| trackStyle        | CSSProperties                                                                             | scroll-view-bar | customize track style                                                                   |
+| thumbStyle        | CSSProperties                                                                             | scroll-view-bar | customize thumb style                                                                   |
+| sideCollapseTrace | {hoverButton: React.ReactNode,hoverButtonStyle?: React.CSSProperties}                     | undefined       | Generates a button similar to tooltip that controls whether the scroll bar is displayed |
+| onUpdate          | (value: {top: number;scrollTop: number;scrollHeight: number;clientHeight: number;})=>void |                 | call when scrolling                                                                     |
 
 ## Development
 

@@ -1,17 +1,8 @@
 import classNames from 'classnames';
 import html2canvas from 'html2canvas';
-import ResizeObserver from 'rc-resize-observer';
-import React, {
-  CSSProperties,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+import React, { CSSProperties, useEffect, useRef, useState } from 'react';
 import Track from './Track';
 import getScrollBarWidth from './util/getScrollBarWidth';
-
-type Trigger = boolean;
 
 export interface ScrollViewBarProps
   extends React.HTMLAttributes<HTMLDivElement> {
@@ -19,8 +10,12 @@ export interface ScrollViewBarProps
   trackWidth?: number;
   trackStyle?: CSSProperties;
   thumbStyle?: CSSProperties;
-  trackLoding?: React.ReactNode;
-  trigger?: Trigger;
+  onLoading?: (loading: boolean) => void;
+  trigger?: boolean;
+  sideCollapseTrace?: {
+    hoverButton: React.ReactNode;
+    hoverButtonStyle?: React.CSSProperties;
+  };
   onUpdate?: (value: {
     top: number;
     scrollTop: number;
@@ -38,15 +33,20 @@ const ScrollViewBar = (props: ScrollViewBarProps) => {
     trackWidth = 160,
     trackStyle,
     thumbStyle,
-    trackLoding = 'loading',
+    onLoading,
     onUpdate,
     trigger = false,
+    sideCollapseTrace,
     ...rest
   } = props;
 
   const viewRef = useRef<HTMLDivElement>(null);
+  const viewWrapperRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const trackRef = useRef<{ handleScroll: () => void }>(null);
+
+  const hoverBtnHideTimeout = useRef<NodeJS.Timeout>();
+  const trackHideTimeout = useRef<NodeJS.Timeout>();
 
   const [scrollBarWidth, setScrollBarWidth] = useState(getScrollBarWidth());
   const [trackCanvas, setTrackCanvas] = useState<{
@@ -54,6 +54,7 @@ const ScrollViewBar = (props: ScrollViewBarProps) => {
     imgSrc: string;
     imageHeight: number;
   }>({ loading: false, imgSrc: '', imageHeight: 0 });
+  const [hideTrack, setHideTrack] = useState(false);
 
   useEffect(() => {
     const fetchCanvas = async () => {
@@ -62,12 +63,9 @@ const ScrollViewBar = (props: ScrollViewBarProps) => {
           ...pre,
           loading: true,
         }));
-        if (viewRef.current) {
-          //处理dom
-          viewRef.current.style.position = 'absolute';
-          viewRef.current.style.bottom = 'auto';
+        if (viewWrapperRef.current) {
           //截图
-          const htmlCanvas = await html2canvas(viewRef.current);
+          const htmlCanvas = await html2canvas(viewWrapperRef.current);
           const ctx = htmlCanvas.getContext('2d');
           if (ctx) {
             //让图片模糊显示
@@ -77,10 +75,6 @@ const ScrollViewBar = (props: ScrollViewBarProps) => {
           const imageHeight =
             (htmlCanvas.height * trackWidth) / htmlCanvas.width;
 
-          //处理dom
-          viewRef.current.style.position = 'absolute';
-          viewRef.current.style.bottom = '0';
-          //获取滚动条的高度，最小高度为30
           setTrackCanvas({
             loading: false,
             imgSrc: src64,
@@ -103,6 +97,12 @@ const ScrollViewBar = (props: ScrollViewBarProps) => {
     };
     if (typeof trigger === 'boolean' && trigger) {
       fetchCanvas();
+    } else {
+      setTrackCanvas({
+        loading: false,
+        imgSrc: '',
+        imageHeight: 0,
+      });
     }
   }, [trigger]);
 
@@ -123,10 +123,16 @@ const ScrollViewBar = (props: ScrollViewBarProps) => {
 
   const containerStyle: React.CSSProperties = {
     position: 'relative',
-    overflow: 'hidden',
     width: '100%',
     height: '100%',
     ...style,
+  };
+
+  const containerWrapperStyle: React.CSSProperties = {
+    position: 'relative',
+    overflow: 'hidden',
+    width: '100%',
+    height: '100%',
   };
 
   const viewStyle: React.CSSProperties = {
@@ -140,21 +146,33 @@ const ScrollViewBar = (props: ScrollViewBarProps) => {
     marginRight: -scrollBarWidth,
     marginBottom: -scrollBarWidth,
   };
+  const viewWrapperStyle: React.CSSProperties = {};
 
-  const fakeLoadingStyle: React.CSSProperties = {
-    position: 'absolute',
-    background: '#fff',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    zIndex: trackCanvas.loading ? 1 : 0,
-    display: trackCanvas.loading ? 'block' : 'none',
-  };
+  return (
+    <div
+      className={classNames([`${prefixCls}-container`, className])}
+      ref={containerRef}
+      style={containerStyle}
+      {...rest}
+    >
+      <div
+        className={classNames([`${prefixCls}-container-wrapper`])}
+        style={containerWrapperStyle}
+      >
+        <div
+          ref={viewRef}
+          className={classNames([`${prefixCls}-view`])}
+          style={viewStyle}
+        >
+          <div
+            ref={viewWrapperRef}
+            className={classNames([`${prefixCls}-view-wrapper`])}
+            style={viewWrapperStyle}
+          >
+            {children}
+          </div>
+        </div>
 
-  const node = useMemo(() => {
-    if (typeof trigger === 'boolean' && trigger) {
-      return (
         <Track
           ref={trackRef}
           trackWidth={trackWidth}
@@ -164,39 +182,51 @@ const ScrollViewBar = (props: ScrollViewBarProps) => {
           onScrollBarWidthChange={setScrollBarWidth}
           trackStyle={trackStyle}
           thumbStyle={thumbStyle}
-          trackLoding={trackLoding}
           onUpdate={onUpdate}
+          onLoading={onLoading}
           imgState={trackCanvas}
+          hideTrack={hideTrack}
+          onHideTrackChange={setHideTrack}
+          hoverBtnHideTimeout={hoverBtnHideTimeout}
+          trackHideTimeout={trackHideTimeout}
+          sideCollapseTrace={sideCollapseTrace}
         ></Track>
-      );
-    }
-    return '';
-  }, [trigger, trackCanvas]);
-
-  return (
-    <ResizeObserver onResize={() => {}}>
-      <div
-        className={classNames([`${prefixCls}-container`, className])}
-        style={containerStyle}
-        ref={containerRef}
-        {...rest}
-      >
-        <div
-          className={classNames([`${prefixCls}-fake-loading`])}
-          style={fakeLoadingStyle}
-        >
-          {trackLoding}
-        </div>
-        <div
-          ref={viewRef}
-          className={classNames([`${prefixCls}-view`])}
-          style={viewStyle}
-        >
-          {children}
-        </div>
-        {node}
       </div>
-    </ResizeObserver>
+      <div
+        className={`${prefixCls}-hover-button`}
+        style={{
+          top: '50%',
+          right: 0,
+          ...sideCollapseTrace?.hoverButtonStyle,
+          position: 'absolute',
+        }}
+        onMouseEnter={() => {
+          if (sideCollapseTrace) {
+            if (trackHideTimeout.current) {
+              clearTimeout(trackHideTimeout.current);
+            }
+            setHideTrack(false);
+          }
+        }}
+        onMouseMove={() => {
+          if (sideCollapseTrace) {
+            if (trackHideTimeout.current) {
+              clearTimeout(trackHideTimeout.current);
+            }
+            setHideTrack(false);
+          }
+        }}
+        onMouseLeave={() => {
+          if (sideCollapseTrace) {
+            hoverBtnHideTimeout.current = setTimeout(() => {
+              setHideTrack(true);
+            }, 300);
+          }
+        }}
+      >
+        {sideCollapseTrace ? sideCollapseTrace.hoverButton : ''}
+      </div>
+    </div>
   );
 };
 
