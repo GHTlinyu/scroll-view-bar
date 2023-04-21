@@ -1,10 +1,39 @@
-import React from 'react';
+import React, { useState } from 'react';
 import ScrollViewBar from 'scroll-view-bar';
 
-const View1 = () => {
+const SideHoverBtn = () => {
+  const [trigger, setTrigger] = useState(false);
+  const [loading, setLoading] = useState(false);
   return (
     <>
-      <ScrollViewBar trigger={true}>
+      <ScrollViewBar
+        style={{ height: 300 }}
+        trigger={trigger}
+        onLoading={(loading) => {
+          setLoading((pre) => (pre !== loading ? loading : pre));
+        }}
+        sideCollapseTrace={{
+          hoverButton: (
+            <div
+              key={'1'}
+              style={{
+                width: 60,
+                textAlign: 'center',
+                background: '#d2cfcb',
+                marginLeft: 7,
+                borderRadius: 7,
+                boxShadow: trigger ? '0 3px 4px #666' : 'none',
+              }}
+              onClick={() => {
+                setTrigger((pre) => !pre);
+              }}
+            >
+              {loading ? 'loading' : 'trigger'}
+            </div>
+          ),
+          hoverButtonStyle: { top: '30%' },
+        }}
+      >
         <div key={0}>
           <p>
             噫吁嚱，危乎高哉！
@@ -57,4 +86,4 @@ const View1 = () => {
   );
 };
 
-export default View1;
+export default SideHoverBtn;

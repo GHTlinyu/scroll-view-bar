@@ -14,24 +14,31 @@ import getThumbHeight from './util/getThumbHeight';
 export interface TrackProps {
   prefixCls?: string;
   trackWidth: number;
+  trackStyle?: CSSProperties;
+  thumbStyle?: CSSProperties;
   viewRef: React.RefObject<HTMLDivElement>;
-  scrollBarWidth: number;
+  hoverBtnHideTimeout: React.MutableRefObject<NodeJS.Timeout | undefined>;
+  trackHideTimeout: React.MutableRefObject<NodeJS.Timeout | undefined>;
   imgState: {
     loading: boolean;
     imgSrc: string;
     imageHeight: number;
   };
+  sideCollapseTrace?: {
+    hoverButton: React.ReactNode;
+    hoverButtonStyle?: React.CSSProperties;
+  };
+  scrollBarWidth: number;
   onScrollBarWidthChange: React.Dispatch<React.SetStateAction<number>>;
-  children?: React.ReactNode;
-  trackStyle?: CSSProperties;
-  thumbStyle?: CSSProperties;
-  trackLoding?: React.ReactNode;
+  hideTrack: boolean;
+  onHideTrackChange: React.Dispatch<React.SetStateAction<boolean>>;
   onUpdate?: (value: {
     top: number;
     scrollTop: number;
     scrollHeight: number;
     clientHeight: number;
   }) => void;
+  onLoading?: (loading: boolean) => void;
 }
 
 export type TrackRef = { handleScroll: () => void };
@@ -41,13 +48,18 @@ const Track = (props: TrackProps, ref: React.Ref<TrackRef>) => {
     prefixCls,
     viewRef,
     scrollBarWidth,
-    onScrollBarWidthChange,
+    imgState,
     trackWidth,
+    hideTrack,
+    hoverBtnHideTimeout,
+    trackHideTimeout,
+    sideCollapseTrace,
     trackStyle: customTrackStyle,
     thumbStyle: customThumbStyle,
-    trackLoding,
+    onScrollBarWidthChange,
+    onHideTrackChange,
     onUpdate,
-    imgState,
+    onLoading,
   } = props;
 
   const imageRef = useRef<HTMLImageElement>(null);
@@ -171,6 +183,27 @@ const Track = (props: TrackProps, ref: React.Ref<TrackRef>) => {
     });
   };
 
+  const handleTrackMouseEnter = () => {
+    if (hoverBtnHideTimeout.current) {
+      clearTimeout(hoverBtnHideTimeout.current);
+    }
+    onHideTrackChange(false);
+  };
+
+  const handleTrackMouseLeave = () => {
+    trackHideTimeout.current = setTimeout(() => {
+      onHideTrackChange(true);
+    }, 300);
+  };
+
+  const handleTrackMousemove = (e: MouseEvent) => {
+    e.preventDefault();
+    if (hoverBtnHideTimeout.current) {
+      clearTimeout(hoverBtnHideTimeout.current);
+    }
+    onHideTrackChange(false);
+  };
+
   useEffect(() => {
     //获取浏览器默认滚动栏宽度
     const freshScrollbarWidth = getScrollBarWidth();
@@ -187,6 +220,11 @@ const Track = (props: TrackProps, ref: React.Ref<TrackRef>) => {
     thumbRef.current.addEventListener('mousedown', handleThumbMouseDown);
     trackRef.current.addEventListener('mousedown', handleTrackMouseDown);
     trackRef.current.addEventListener('wheel', handleTrackWheel);
+    if (sideCollapseTrace) {
+      trackRef.current.addEventListener('mouseenter', handleTrackMouseEnter);
+      trackRef.current.addEventListener('mouseleave', handleTrackMouseLeave);
+      trackRef.current.addEventListener('mousemove', handleTrackMousemove);
+    }
 
     return () => {
       if (
@@ -198,6 +236,10 @@ const Track = (props: TrackProps, ref: React.Ref<TrackRef>) => {
       thumbRef.current.removeEventListener('mousedown', handleThumbMouseDown);
       trackRef.current.removeEventListener('mousedown', handleTrackMouseDown);
       trackRef.current.removeEventListener('wheel', handleTrackWheel);
+      trackRef.current.removeEventListener('mouseenter', handleTrackMouseEnter);
+      trackRef.current.removeEventListener('mouseleave', handleTrackMouseLeave);
+      trackRef.current.removeEventListener('mouseleave', handleTrackMousemove);
+      trackRef.current.removeEventListener('mousemove', handleTrackMousemove);
 
       if (requestFrame.current) {
         raf.cancel(requestFrame.current);
@@ -277,7 +319,16 @@ const Track = (props: TrackProps, ref: React.Ref<TrackRef>) => {
   useImperativeHandle(ref, () => ({ handleScroll }), []);
 
   const thumbHeight = useMemo(() => {
-    if (!imgState.loading && viewRef.current && trackRef.current) {
+    if (typeof onLoading === 'function') {
+      onLoading?.(imgState.loading);
+    }
+
+    if (
+      !imgState.loading &&
+      imgState.imgSrc !== '' &&
+      viewRef.current &&
+      trackRef.current
+    ) {
       const { scrollHeight } = viewRef.current;
       const { clientHeight } = trackRef.current;
       if (clientHeight >= scrollHeight) {
@@ -286,7 +337,7 @@ const Track = (props: TrackProps, ref: React.Ref<TrackRef>) => {
       let height =
         Math.ceil((clientHeight / scrollHeight) * imgState.imageHeight) ?? 0;
       if (imgState.imageHeight === height) height = 0;
-      return Math.max(height, 30);
+      return height;
     }
     return 0;
   }, [imgState]);
@@ -295,9 +346,8 @@ const Track = (props: TrackProps, ref: React.Ref<TrackRef>) => {
     position: 'absolute',
     right: 0,
     bottom: 0,
-    zIndex: 1,
     top: 0,
-    width: trackWidth,
+    width: imgState.imgSrc !== '' ? (hideTrack ? 0 : trackWidth) : 0,
     overflow: 'hidden',
     background: '#fff',
     ...customTrackStyle,
@@ -328,21 +378,15 @@ const Track = (props: TrackProps, ref: React.Ref<TrackRef>) => {
         style={trackStyle}
       >
         <div ref={imageWrapperRef} style={imageWrapperStyle}>
-          {imgState.loading ? (
-            trackLoding
-          ) : imgState.imgSrc !== '' ? (
-            <img
-              style={{
-                width: 'inherit',
-                userSelect: 'none',
-              }}
-              crossOrigin="anonymous"
-              src={imgState.imgSrc}
-              ref={imageRef}
-            />
-          ) : (
-            ''
-          )}
+          <img
+            style={{
+              width: 'inherit',
+              userSelect: 'none',
+            }}
+            crossOrigin="anonymous"
+            src={imgState.imgSrc}
+            ref={imageRef}
+          />
         </div>
         <div
           ref={thumbRef}

@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import ScrollViewBar from 'scroll-view-bar';
-import loading from '../../assets/loading.gif';
 
 const CustomLoading = () => {
   const [trigger, setTrigger] = useState(false);
+  const [loading, setLoading] = useState(false);
   return (
     <>
       <div
@@ -20,11 +20,13 @@ const CustomLoading = () => {
           setTrigger((pre) => !pre);
         }}
       >
-        trigger
+        {loading ? 'loading' : 'trigger'}
       </div>
       <ScrollViewBar
         style={{ height: 300 }}
-        trackLoding={<img src={loading} />}
+        onLoading={(loading) => {
+          setLoading(loading);
+        }}
         trigger={trigger}
       >
         <div>
