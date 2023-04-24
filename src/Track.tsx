@@ -24,7 +24,7 @@ export interface TrackProps {
     imgSrc: string;
     imageHeight: number;
   };
-  sideCollapseTrace?: {
+  sideCollapseTrack?: {
     hoverButton: React.ReactNode;
     hoverButtonStyle?: React.CSSProperties;
   };
@@ -38,7 +38,6 @@ export interface TrackProps {
     scrollHeight: number;
     clientHeight: number;
   }) => void;
-  onLoading?: (loading: boolean) => void;
 }
 
 export type TrackRef = { handleScroll: () => void };
@@ -53,13 +52,12 @@ const Track = (props: TrackProps, ref: React.Ref<TrackRef>) => {
     hideTrack,
     hoverBtnHideTimeout,
     trackHideTimeout,
-    sideCollapseTrace,
+    sideCollapseTrack,
     trackStyle: customTrackStyle,
     thumbStyle: customThumbStyle,
     onScrollBarWidthChange,
     onHideTrackChange,
     onUpdate,
-    onLoading,
   } = props;
 
   const imageRef = useRef<HTMLImageElement>(null);
@@ -220,7 +218,7 @@ const Track = (props: TrackProps, ref: React.Ref<TrackRef>) => {
     thumbRef.current.addEventListener('mousedown', handleThumbMouseDown);
     trackRef.current.addEventListener('mousedown', handleTrackMouseDown);
     trackRef.current.addEventListener('wheel', handleTrackWheel);
-    if (sideCollapseTrace) {
+    if (sideCollapseTrack) {
       trackRef.current.addEventListener('mouseenter', handleTrackMouseEnter);
       trackRef.current.addEventListener('mouseleave', handleTrackMouseLeave);
       trackRef.current.addEventListener('mousemove', handleTrackMousemove);
@@ -319,10 +317,6 @@ const Track = (props: TrackProps, ref: React.Ref<TrackRef>) => {
   useImperativeHandle(ref, () => ({ handleScroll }), []);
 
   const thumbHeight = useMemo(() => {
-    if (typeof onLoading === 'function') {
-      onLoading?.(imgState.loading);
-    }
-
     if (
       !imgState.loading &&
       imgState.imgSrc !== '' &&

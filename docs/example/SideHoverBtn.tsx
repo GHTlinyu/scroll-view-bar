@@ -1,21 +1,17 @@
 import React, { useState } from 'react';
 import ScrollViewBar from 'scroll-view-bar';
+import loadImg from '../../assets/loading.gif';
 
 const SideHoverBtn = () => {
   const [trigger, setTrigger] = useState(false);
-  const [loading, setLoading] = useState(false);
   return (
     <>
       <ScrollViewBar
         style={{ height: 300 }}
         trigger={trigger}
-        onLoading={(loading) => {
-          setLoading((pre) => (pre !== loading ? loading : pre));
-        }}
-        sideCollapseTrace={{
+        sideCollapseTrack={{
           hoverButton: (
             <div
-              key={'1'}
               style={{
                 width: 60,
                 textAlign: 'center',
@@ -28,13 +24,14 @@ const SideHoverBtn = () => {
                 setTrigger((pre) => !pre);
               }}
             >
-              {loading ? 'loading' : 'trigger'}
+              trigger
             </div>
           ),
           hoverButtonStyle: { top: '30%' },
+          loading: <img src={loadImg} width={20}></img>,
         }}
       >
-        <div key={0}>
+        <div>
           <p>
             噫吁嚱，危乎高哉！
             <br />

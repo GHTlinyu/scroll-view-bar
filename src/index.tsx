@@ -12,9 +12,10 @@ export interface ScrollViewBarProps
   thumbStyle?: CSSProperties;
   onLoading?: (loading: boolean) => void;
   trigger?: boolean;
-  sideCollapseTrace?: {
+  sideCollapseTrack?: {
     hoverButton: React.ReactNode;
     hoverButtonStyle?: React.CSSProperties;
+    loading?: React.ReactNode;
   };
   onUpdate?: (value: {
     top: number;
@@ -36,7 +37,7 @@ const ScrollViewBar = (props: ScrollViewBarProps) => {
     onLoading,
     onUpdate,
     trigger = false,
-    sideCollapseTrace,
+    sideCollapseTrack,
     ...rest
   } = props;
 
@@ -59,14 +60,19 @@ const ScrollViewBar = (props: ScrollViewBarProps) => {
   useEffect(() => {
     const fetchCanvas = async () => {
       try {
-        setTrackCanvas((pre) => ({
-          ...pre,
-          loading: true,
-        }));
+        if (typeof onLoading === 'function') {
+          onLoading?.(true);
+        }
+        setTrackCanvas((pre) => {
+          return {
+            ...pre,
+            loading: true,
+          };
+        });
         if (viewWrapperRef.current) {
           //截图
           const htmlCanvas = await html2canvas(viewWrapperRef.current);
-          const ctx = htmlCanvas.getContext('2d');
+          const ctx = htmlCanvas.getContext('2d', { willReadFrequently: true });
           if (ctx) {
             //让图片模糊显示
             ctx.imageSmoothingEnabled = false;
@@ -74,24 +80,38 @@ const ScrollViewBar = (props: ScrollViewBarProps) => {
           const src64 = htmlCanvas.toDataURL();
           const imageHeight =
             (htmlCanvas.height * trackWidth) / htmlCanvas.width;
-
-          setTrackCanvas({
-            loading: false,
-            imgSrc: src64,
-            imageHeight: imageHeight,
+          if (typeof onLoading === 'function') {
+            onLoading?.(false);
+          }
+          setTrackCanvas(() => {
+            return {
+              loading: false,
+              imgSrc: src64,
+              imageHeight: imageHeight,
+            };
           });
         } else {
-          setTrackCanvas({
-            loading: false,
-            imgSrc: '',
-            imageHeight: 0,
+          if (typeof onLoading === 'function') {
+            onLoading?.(false);
+          }
+          setTrackCanvas(() => {
+            return {
+              loading: false,
+              imgSrc: '',
+              imageHeight: 0,
+            };
           });
         }
       } catch (error) {
-        setTrackCanvas({
-          loading: false,
-          imgSrc: '',
-          imageHeight: 0,
+        if (typeof onLoading === 'function') {
+          onLoading?.(false);
+        }
+        setTrackCanvas(() => {
+          return {
+            loading: false,
+            imgSrc: '',
+            imageHeight: 0,
+          };
         });
       }
     };
@@ -183,13 +203,12 @@ const ScrollViewBar = (props: ScrollViewBarProps) => {
           trackStyle={trackStyle}
           thumbStyle={thumbStyle}
           onUpdate={onUpdate}
-          onLoading={onLoading}
           imgState={trackCanvas}
           hideTrack={hideTrack}
           onHideTrackChange={setHideTrack}
           hoverBtnHideTimeout={hoverBtnHideTimeout}
           trackHideTimeout={trackHideTimeout}
-          sideCollapseTrace={sideCollapseTrace}
+          sideCollapseTrack={sideCollapseTrack}
         ></Track>
       </div>
       <div
@@ -197,11 +216,11 @@ const ScrollViewBar = (props: ScrollViewBarProps) => {
         style={{
           top: '50%',
           right: 0,
-          ...sideCollapseTrace?.hoverButtonStyle,
+          ...sideCollapseTrack?.hoverButtonStyle,
           position: 'absolute',
         }}
         onMouseEnter={() => {
-          if (sideCollapseTrace) {
+          if (sideCollapseTrack) {
             if (trackHideTimeout.current) {
               clearTimeout(trackHideTimeout.current);
             }
@@ -209,7 +228,7 @@ const ScrollViewBar = (props: ScrollViewBarProps) => {
           }
         }}
         onMouseMove={() => {
-          if (sideCollapseTrace) {
+          if (sideCollapseTrack) {
             if (trackHideTimeout.current) {
               clearTimeout(trackHideTimeout.current);
             }
@@ -217,14 +236,18 @@ const ScrollViewBar = (props: ScrollViewBarProps) => {
           }
         }}
         onMouseLeave={() => {
-          if (sideCollapseTrace) {
+          if (sideCollapseTrack) {
             hoverBtnHideTimeout.current = setTimeout(() => {
               setHideTrack(true);
             }, 300);
           }
         }}
       >
-        {sideCollapseTrace ? sideCollapseTrace.hoverButton : ''}
+        {sideCollapseTrack
+          ? trackCanvas.loading
+            ? sideCollapseTrack.loading ?? 'loading'
+            : sideCollapseTrack.hoverButton
+          : ''}
       </div>
     </div>
   );
