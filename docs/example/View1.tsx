@@ -1,25 +1,16 @@
-import React, { useState } from 'react';
+import React from 'react';
 import ScrollViewBar from 'scroll-view-bar';
 
 const View1 = () => {
-  const [deleteNode, setDeleteNode] = useState(false);
   return (
     <>
       <ScrollViewBar
-        trigger={
-          <div style={{ writingMode: 'vertical-lr', cursor: 'pointer' }}>
-            滚动导航
-          </div>
-        }
+        delay={0}
+        trigger={<div style={{ writingMode: 'vertical-lr' }}>滚动导航</div>}
+        onUpdate={(value) => {
+          console.log(value);
+        }}
       >
-        <button
-          type="button"
-          onClick={() => {
-            setDeleteNode((pre) => !pre);
-          }}
-        >
-          btn
-        </button>
         <div key={0}>
           <p>
             噫吁嚱，危乎高哉！
@@ -66,7 +57,6 @@ const View1 = () => {
             <br />
             蜀道之难，难于上青天，侧身西望长咨嗟！
           </p>
-          {deleteNode ? '122' : '133333333333333333333333333333333333333'}
         </div>
       </ScrollViewBar>
     </>

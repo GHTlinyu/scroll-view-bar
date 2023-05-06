@@ -1,6 +1,14 @@
 import classNames from 'classnames';
 import html2canvas from 'html2canvas';
-import React, { CSSProperties, useEffect, useRef, useState } from 'react';
+import debounce from 'lodash/debounce';
+import ResizeObserver from 'rc-resize-observer';
+import React, {
+  CSSProperties,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
 import Track from './Track';
 import getScrollBarWidth from './util/getScrollBarWidth';
 
@@ -55,7 +63,7 @@ const ScrollViewBar = (props: ScrollViewBarProps) => {
 
   const [hideTrack, setHideTrack] = useState(true);
 
-  const observe = (fetchC: { (): Promise<void>; (): void }) => {
+  const observe = useCallback((fetchC: { (): Promise<void>; (): void }) => {
     //使用观察者监视背景
     const observerConfig = {
       attributes: true,
@@ -65,10 +73,11 @@ const ScrollViewBar = (props: ScrollViewBarProps) => {
       attributeOldValue: true,
       characterDataOldValue: true,
     };
-    const callback = function () {
-      //使用debounce优化？？？
+    const callback = debounce(function () {
+      console.log('object');
+      //使用debounce优化
       fetchC();
-    };
+    }, 500);
     // 创建一个观察器实例并传入回调函数
     observerRef.current = new MutationObserver(callback);
 
@@ -76,7 +85,7 @@ const ScrollViewBar = (props: ScrollViewBarProps) => {
     if (viewRef.current) {
       observerRef.current.observe(viewRef.current, observerConfig);
     }
-  };
+  }, []);
 
   const fetchCanvas = async () => {
     try {
@@ -114,17 +123,17 @@ const ScrollViewBar = (props: ScrollViewBarProps) => {
           imageHeight: 0,
         };
       });
-    } finally {
-      //延迟加载之后，使用mutationObserver监视view中节点变化，并更新背景图
-      observe(fetchCanvas);
     }
   };
 
   useEffect(() => {
     //使用延迟生成背景
-    if (delay && delay !== 0) {
+    if (typeof delay === 'number') {
       timeoutId.current = setTimeout(() => {
-        fetchCanvas();
+        fetchCanvas().finally(() => {
+          //延迟加载之后，使用mutationObserver监视view中节点变化，并更新背景图
+          observe(fetchCanvas);
+        });
       }, delay);
     }
 
@@ -152,6 +161,14 @@ const ScrollViewBar = (props: ScrollViewBarProps) => {
       viewRef.current.removeEventListener('scroll', handleScroll);
     };
   }, []);
+
+  const handleResize = () => {
+    const freshScrollbarWidth = getScrollBarWidth();
+    if (scrollBarWidth !== freshScrollbarWidth) {
+      setScrollBarWidth(freshScrollbarWidth);
+    }
+    fetchCanvas();
+  };
 
   const containerStyle: React.CSSProperties = {
     position: 'relative',
@@ -181,82 +198,82 @@ const ScrollViewBar = (props: ScrollViewBarProps) => {
   const viewWrapperStyle: React.CSSProperties = {};
 
   return (
-    <div
-      className={classNames([`${prefixCls}-container`, className])}
-      ref={containerRef}
-      style={containerStyle}
-      {...rest}
-    >
+    <ResizeObserver onResize={debounce(handleResize, 300)}>
       <div
-        className={classNames([`${prefixCls}-container-wrapper`])}
-        style={containerWrapperStyle}
+        className={classNames([`${prefixCls}-container`, className])}
+        ref={containerRef}
+        style={containerStyle}
+        {...rest}
       >
         <div
-          ref={viewRef}
-          className={classNames([`${prefixCls}-view`])}
-          style={viewStyle}
+          className={classNames([`${prefixCls}-container-wrapper`])}
+          style={containerWrapperStyle}
         >
           <div
-            ref={viewWrapperRef}
-            className={classNames([`${prefixCls}-view-wrapper`])}
-            style={viewWrapperStyle}
+            ref={viewRef}
+            className={classNames([`${prefixCls}-view`])}
+            style={viewStyle}
           >
-            {children}
+            <div
+              ref={viewWrapperRef}
+              className={classNames([`${prefixCls}-view-wrapper`])}
+              style={viewWrapperStyle}
+            >
+              {children}
+            </div>
           </div>
-        </div>
 
-        <Track
-          ref={trackRef}
-          trackWidth={trackWidth}
-          prefixCls={prefixCls}
-          viewRef={viewRef}
-          scrollBarWidth={scrollBarWidth}
-          onScrollBarWidthChange={setScrollBarWidth}
-          trackStyle={trackStyle}
-          thumbStyle={thumbStyle}
-          onUpdate={onUpdate}
-          imgState={trackCanvas}
-          hideTrack={hideTrack}
-          onHideTrackChange={setHideTrack}
-          hoverBtnHideTimeout={hoverBtnHideTimeout}
-          trackHideTimeout={trackHideTimeout}
-        ></Track>
-      </div>
-      <div
-        className={`${prefixCls}-hover-button`}
-        style={{
-          top: 0,
-          right: 0,
-          position: 'absolute',
-          cursor: trackCanvas.loading ? 'not-allowed' : 'auto',
-        }}
-        onMouseEnter={() => {
-          if (trigger) {
+          <Track
+            ref={trackRef}
+            trackWidth={trackWidth}
+            prefixCls={prefixCls}
+            viewRef={viewRef}
+            scrollBarWidth={scrollBarWidth}
+            onScrollBarWidthChange={setScrollBarWidth}
+            trackStyle={trackStyle}
+            thumbStyle={thumbStyle}
+            onUpdate={onUpdate}
+            imgState={trackCanvas}
+            hideTrack={hideTrack}
+            onHideTrackChange={setHideTrack}
+            hoverBtnHideTimeout={hoverBtnHideTimeout}
+            trackHideTimeout={trackHideTimeout}
+          ></Track>
+        </div>
+        <div
+          className={classNames([
+            `${prefixCls}-hover-button`,
+            !trackCanvas.loading ? `${prefixCls}-hover-button-active` : '',
+          ])}
+          style={{
+            top: 0,
+            right: 0,
+            position: 'absolute',
+            userSelect: 'none',
+            cursor: trackCanvas.loading ? 'not-allowed' : 'auto',
+          }}
+          onMouseEnter={() => {
             if (trackHideTimeout.current) {
               clearTimeout(trackHideTimeout.current);
             }
             setHideTrack(false);
-          }
-        }}
-        onMouseMove={() => {
-          if (trigger) {
+          }}
+          onMouseMove={() => {
             if (trackHideTimeout.current) {
               clearTimeout(trackHideTimeout.current);
             }
             setHideTrack(false);
-          }
-        }}
-        onMouseLeave={() => {
-          if (trigger) {
+          }}
+          onMouseLeave={() => {
             hoverBtnHideTimeout.current = setTimeout(() => {
               setHideTrack(true);
             }, 300);
-          }
-        }}
-      >
-        {trigger}
+          }}
+        >
+          {trigger}
+        </div>
       </div>
-    </div>
+    </ResizeObserver>
   );
 };
 

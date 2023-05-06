@@ -5,9 +5,8 @@
 
 Scroll bar with thumbnail background, similar to vscode side navigation
 
-- Support for listening to the status of the scrollbar being generated,look API _onLoading_ method
+- Support for listening to the status of the scrollbar being generated
 - Support custom scrollbar styles
-- Consider using _sidehoverbtn_ if your page render more than once.The purpose is to manually control the generation of the scroll bar
 
 ![](https://raw.githubusercontent.com/GHTlinyu/images/master/img/scrollViewBar.gif)
 
