@@ -24,10 +24,6 @@ export interface TrackProps {
     imgSrc: string;
     imageHeight: number;
   };
-  sideCollapseTrack?: {
-    hoverButton: React.ReactNode;
-    hoverButtonStyle?: React.CSSProperties;
-  };
   scrollBarWidth: number;
   onScrollBarWidthChange: React.Dispatch<React.SetStateAction<number>>;
   hideTrack: boolean;
@@ -52,7 +48,6 @@ const Track = (props: TrackProps, ref: React.Ref<TrackRef>) => {
     hideTrack,
     hoverBtnHideTimeout,
     trackHideTimeout,
-    sideCollapseTrack,
     trackStyle: customTrackStyle,
     thumbStyle: customThumbStyle,
     onScrollBarWidthChange,
@@ -216,13 +211,12 @@ const Track = (props: TrackProps, ref: React.Ref<TrackRef>) => {
     )
       return;
     thumbRef.current.addEventListener('mousedown', handleThumbMouseDown);
+
     trackRef.current.addEventListener('mousedown', handleTrackMouseDown);
     trackRef.current.addEventListener('wheel', handleTrackWheel);
-    if (sideCollapseTrack) {
-      trackRef.current.addEventListener('mouseenter', handleTrackMouseEnter);
-      trackRef.current.addEventListener('mouseleave', handleTrackMouseLeave);
-      trackRef.current.addEventListener('mousemove', handleTrackMousemove);
-    }
+    trackRef.current.addEventListener('mouseenter', handleTrackMouseEnter);
+    trackRef.current.addEventListener('mouseleave', handleTrackMouseLeave);
+    trackRef.current.addEventListener('mousemove', handleTrackMousemove);
 
     return () => {
       if (
@@ -232,11 +226,11 @@ const Track = (props: TrackProps, ref: React.Ref<TrackRef>) => {
       )
         return;
       thumbRef.current.removeEventListener('mousedown', handleThumbMouseDown);
+
       trackRef.current.removeEventListener('mousedown', handleTrackMouseDown);
       trackRef.current.removeEventListener('wheel', handleTrackWheel);
       trackRef.current.removeEventListener('mouseenter', handleTrackMouseEnter);
       trackRef.current.removeEventListener('mouseleave', handleTrackMouseLeave);
-      trackRef.current.removeEventListener('mouseleave', handleTrackMousemove);
       trackRef.current.removeEventListener('mousemove', handleTrackMousemove);
 
       if (requestFrame.current) {
@@ -344,6 +338,7 @@ const Track = (props: TrackProps, ref: React.Ref<TrackRef>) => {
     width: imgState.imgSrc !== '' ? (hideTrack ? 0 : trackWidth) : 0,
     overflow: 'hidden',
     background: '#fff',
+    transition: 'all 0.3s',
     ...customTrackStyle,
   };
 
