@@ -10,13 +10,8 @@ export interface ScrollViewBarProps
   trackWidth?: number;
   trackStyle?: CSSProperties;
   thumbStyle?: CSSProperties;
-  onLoading?: (loading: boolean) => void;
-  trigger?: boolean;
-  sideCollapseTrack?: {
-    hoverButton: React.ReactNode;
-    hoverButtonStyle?: React.CSSProperties;
-    loading?: React.ReactNode;
-  };
+  delay?: number;
+  trigger?: React.ReactNode;
   onUpdate?: (value: {
     top: number;
     scrollTop: number;
@@ -34,10 +29,9 @@ const ScrollViewBar = (props: ScrollViewBarProps) => {
     trackWidth = 160,
     trackStyle,
     thumbStyle,
-    onLoading,
+    delay = 2000,
+    trigger = 'scroll navigation',
     onUpdate,
-    trigger = false,
-    sideCollapseTrack,
     ...rest
   } = props;
 
@@ -46,6 +40,9 @@ const ScrollViewBar = (props: ScrollViewBarProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const trackRef = useRef<{ handleScroll: () => void }>(null);
 
+  //延迟加载背景图
+  const timeoutId = useRef<NodeJS.Timeout>();
+  const observerRef = useRef<MutationObserver>();
   const hoverBtnHideTimeout = useRef<NodeJS.Timeout>();
   const trackHideTimeout = useRef<NodeJS.Timeout>();
 
@@ -54,58 +51,53 @@ const ScrollViewBar = (props: ScrollViewBarProps) => {
     loading: boolean;
     imgSrc: string;
     imageHeight: number;
-  }>({ loading: false, imgSrc: '', imageHeight: 0 });
-  const [hideTrack, setHideTrack] = useState(false);
+  }>({ loading: true, imgSrc: '', imageHeight: 0 });
 
-  useEffect(() => {
-    const fetchCanvas = async () => {
-      try {
-        if (typeof onLoading === 'function') {
-          onLoading?.(true);
+  const [hideTrack, setHideTrack] = useState(true);
+
+  const observe = (fetchC: { (): Promise<void>; (): void }) => {
+    //使用观察者监视背景
+    const observerConfig = {
+      attributes: true,
+      chidList: true,
+      subtree: true,
+      characterData: true,
+      attributeOldValue: true,
+      characterDataOldValue: true,
+    };
+    const callback = function () {
+      //使用debounce优化？？？
+      fetchC();
+    };
+    // 创建一个观察器实例并传入回调函数
+    observerRef.current = new MutationObserver(callback);
+
+    // 以上述配置开始观察目标节点
+    if (viewRef.current) {
+      observerRef.current.observe(viewRef.current, observerConfig);
+    }
+  };
+
+  const fetchCanvas = async () => {
+    try {
+      if (viewWrapperRef.current) {
+        //截图
+        const htmlCanvas = await html2canvas(viewWrapperRef.current);
+        const ctx = htmlCanvas.getContext('2d', { willReadFrequently: true });
+        if (ctx) {
+          //让图片模糊显示
+          ctx.imageSmoothingEnabled = false;
         }
-        setTrackCanvas((pre) => {
+        const src64 = htmlCanvas.toDataURL();
+        const imageHeight = (htmlCanvas.height * trackWidth) / htmlCanvas.width;
+        setTrackCanvas(() => {
           return {
-            ...pre,
-            loading: true,
+            loading: false,
+            imgSrc: src64,
+            imageHeight: imageHeight,
           };
         });
-        if (viewWrapperRef.current) {
-          //截图
-          const htmlCanvas = await html2canvas(viewWrapperRef.current);
-          const ctx = htmlCanvas.getContext('2d', { willReadFrequently: true });
-          if (ctx) {
-            //让图片模糊显示
-            ctx.imageSmoothingEnabled = false;
-          }
-          const src64 = htmlCanvas.toDataURL();
-          const imageHeight =
-            (htmlCanvas.height * trackWidth) / htmlCanvas.width;
-          if (typeof onLoading === 'function') {
-            onLoading?.(false);
-          }
-          setTrackCanvas(() => {
-            return {
-              loading: false,
-              imgSrc: src64,
-              imageHeight: imageHeight,
-            };
-          });
-        } else {
-          if (typeof onLoading === 'function') {
-            onLoading?.(false);
-          }
-          setTrackCanvas(() => {
-            return {
-              loading: false,
-              imgSrc: '',
-              imageHeight: 0,
-            };
-          });
-        }
-      } catch (error) {
-        if (typeof onLoading === 'function') {
-          onLoading?.(false);
-        }
+      } else {
         setTrackCanvas(() => {
           return {
             loading: false,
@@ -114,17 +106,37 @@ const ScrollViewBar = (props: ScrollViewBarProps) => {
           };
         });
       }
-    };
-    if (typeof trigger === 'boolean' && trigger) {
-      fetchCanvas();
-    } else {
-      setTrackCanvas({
-        loading: false,
-        imgSrc: '',
-        imageHeight: 0,
+    } catch (error) {
+      setTrackCanvas(() => {
+        return {
+          loading: false,
+          imgSrc: '',
+          imageHeight: 0,
+        };
       });
+    } finally {
+      //延迟加载之后，使用mutationObserver监视view中节点变化，并更新背景图
+      observe(fetchCanvas);
     }
-  }, [trigger]);
+  };
+
+  useEffect(() => {
+    //使用延迟生成背景
+    if (delay && delay !== 0) {
+      timeoutId.current = setTimeout(() => {
+        fetchCanvas();
+      }, delay);
+    }
+
+    return () => {
+      if (timeoutId) {
+        clearTimeout(timeoutId.current);
+      }
+      if (observerRef.current) {
+        observerRef.current.disconnect();
+      }
+    };
+  }, []);
 
   const handleScroll = () => {
     if (trackRef.current) trackRef.current.handleScroll();
@@ -208,19 +220,18 @@ const ScrollViewBar = (props: ScrollViewBarProps) => {
           onHideTrackChange={setHideTrack}
           hoverBtnHideTimeout={hoverBtnHideTimeout}
           trackHideTimeout={trackHideTimeout}
-          sideCollapseTrack={sideCollapseTrack}
         ></Track>
       </div>
       <div
         className={`${prefixCls}-hover-button`}
         style={{
-          top: '50%',
+          top: 0,
           right: 0,
-          ...sideCollapseTrack?.hoverButtonStyle,
           position: 'absolute',
+          cursor: trackCanvas.loading ? 'not-allowed' : 'auto',
         }}
         onMouseEnter={() => {
-          if (sideCollapseTrack) {
+          if (trigger) {
             if (trackHideTimeout.current) {
               clearTimeout(trackHideTimeout.current);
             }
@@ -228,7 +239,7 @@ const ScrollViewBar = (props: ScrollViewBarProps) => {
           }
         }}
         onMouseMove={() => {
-          if (sideCollapseTrack) {
+          if (trigger) {
             if (trackHideTimeout.current) {
               clearTimeout(trackHideTimeout.current);
             }
@@ -236,18 +247,14 @@ const ScrollViewBar = (props: ScrollViewBarProps) => {
           }
         }}
         onMouseLeave={() => {
-          if (sideCollapseTrack) {
+          if (trigger) {
             hoverBtnHideTimeout.current = setTimeout(() => {
               setHideTrack(true);
             }, 300);
           }
         }}
       >
-        {sideCollapseTrack
-          ? trackCanvas.loading
-            ? sideCollapseTrack.loading ?? 'loading'
-            : sideCollapseTrack.hoverButton
-          : ''}
+        {trigger}
       </div>
     </div>
   );
