@@ -73,9 +73,8 @@ const ScrollViewBar = (props: ScrollViewBarProps) => {
       attributeOldValue: true,
       characterDataOldValue: true,
     };
+    //使用debounce优化
     const callback = debounce(function () {
-      console.log('object');
-      //使用debounce优化
       fetchC();
     }, 500);
     // 创建一个观察器实例并传入回调函数
