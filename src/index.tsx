@@ -20,6 +20,7 @@ export interface ScrollViewBarProps
   thumbStyle?: CSSProperties;
   delay?: number;
   trigger?: React.ReactNode;
+  observable?: boolean;
   onUpdate?: (value: {
     top: number;
     scrollTop: number;
@@ -38,6 +39,7 @@ const ScrollViewBar = (props: ScrollViewBarProps) => {
     trackStyle,
     thumbStyle,
     delay = 2000,
+    observable = false,
     trigger = 'scroll navigation',
     onUpdate,
     ...rest
@@ -131,7 +133,9 @@ const ScrollViewBar = (props: ScrollViewBarProps) => {
       timeoutId.current = setTimeout(() => {
         fetchCanvas().finally(() => {
           //延迟加载之后，使用mutationObserver监视view中节点变化，并更新背景图
-          observe(fetchCanvas);
+          if (observable) {
+            observe(fetchCanvas);
+          }
         });
       }, delay);
     }
@@ -165,8 +169,8 @@ const ScrollViewBar = (props: ScrollViewBarProps) => {
     const freshScrollbarWidth = getScrollBarWidth();
     if (scrollBarWidth !== freshScrollbarWidth) {
       setScrollBarWidth(freshScrollbarWidth);
+      fetchCanvas();
     }
-    fetchCanvas();
   };
 
   const containerStyle: React.CSSProperties = {

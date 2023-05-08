@@ -1,11 +1,12 @@
 import React from 'react';
 import ScrollViewBar from 'scroll-view-bar';
+import './view1.css';
 
 const View1 = () => {
   return (
     <>
       <ScrollViewBar
-        delay={0}
+        delay={5000}
         trigger={<div style={{ writingMode: 'vertical-lr' }}>滚动导航</div>}
         onUpdate={(value) => {
           console.log(value);

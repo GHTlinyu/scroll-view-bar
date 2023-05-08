@@ -16,6 +16,7 @@ const ContentChange = () => {
       <ScrollViewBar
         style={{ height: 300 }}
         trigger={<div style={{ writingMode: 'vertical-lr' }}>滚动导航</div>}
+        observable={true}
       >
         {deleteNode ? (
           <div>
