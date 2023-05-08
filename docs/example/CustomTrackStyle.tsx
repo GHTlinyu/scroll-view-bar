@@ -5,8 +5,7 @@ const CustomTrackStyle = () => {
   return (
     <ScrollViewBar
       style={{ height: 300 }}
-      trigger={true}
-      trackStyle={{ border: '3px solid #6fd0ce', background: '#c9ecf2' }}
+      trackStyle={{ background: '#c9ecf2' }}
     >
       <div>
         <p>

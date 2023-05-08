@@ -4,7 +4,13 @@ import ScrollViewBar from 'scroll-view-bar';
 const View1 = () => {
   return (
     <>
-      <ScrollViewBar trigger={true}>
+      <ScrollViewBar
+        delay={0}
+        trigger={<div style={{ writingMode: 'vertical-lr' }}>滚动导航</div>}
+        onUpdate={(value) => {
+          console.log(value);
+        }}
+      >
         <div key={0}>
           <p>
             噫吁嚱，危乎高哉！

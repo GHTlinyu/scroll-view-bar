@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react';
 import DefaultLongView from './DefaultLongView';
 import DefaultView from './DefaultView';
 import DefaultWithOutScrollBar from './DefaultWithOutScrollBar';
+import './view1.css';
 
 const Default = () => {
   const [used, setUsed] = useState(false);
