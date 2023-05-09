@@ -1,7 +1,7 @@
 import classNames from 'classnames';
 import html2canvas from 'html2canvas';
 import debounce from 'lodash/debounce';
-import ResizeObserver from 'rc-resize-observer';
+import ResizeObserver, { SizeInfo } from 'rc-resize-observer';
 import React, {
   CSSProperties,
   useCallback,
@@ -55,6 +55,8 @@ const ScrollViewBar = (props: ScrollViewBarProps) => {
   const observerRef = useRef<MutationObserver>();
   const hoverBtnHideTimeout = useRef<NodeJS.Timeout>();
   const trackHideTimeout = useRef<NodeJS.Timeout>();
+
+  const containerSizeInfo = useRef({ width: 0, height: 0 });
 
   const [scrollBarWidth, setScrollBarWidth] = useState(getScrollBarWidth());
   const [trackCanvas, setTrackCanvas] = useState<{
@@ -127,6 +129,10 @@ const ScrollViewBar = (props: ScrollViewBarProps) => {
     }
   };
 
+  const handleScroll = () => {
+    if (trackRef.current) trackRef.current.handleScroll();
+  };
+
   useEffect(() => {
     //使用延迟生成背景
     if (typeof delay === 'number') {
@@ -139,6 +145,16 @@ const ScrollViewBar = (props: ScrollViewBarProps) => {
         });
       }, delay);
     }
+    //增加滚动事件
+    if (viewRef.current) {
+      viewRef.current.addEventListener('scroll', handleScroll);
+    }
+    //初始化sizeInfo
+    if (containerRef.current) {
+      const { width, height } = containerRef.current.getBoundingClientRect();
+      containerSizeInfo.current.height = height;
+      containerSizeInfo.current.width = width;
+    }
 
     return () => {
       if (timeoutId) {
@@ -147,28 +163,20 @@ const ScrollViewBar = (props: ScrollViewBarProps) => {
       if (observerRef.current) {
         observerRef.current.disconnect();
       }
-    };
-  }, []);
-
-  const handleScroll = () => {
-    if (trackRef.current) trackRef.current.handleScroll();
-  };
-
-  useEffect(() => {
-    if (viewRef.current) {
-      viewRef.current.addEventListener('scroll', handleScroll);
-    }
-
-    return () => {
       if (!viewRef.current) return;
       viewRef.current.removeEventListener('scroll', handleScroll);
     };
   }, []);
 
-  const handleResize = () => {
+  const handleResize = ({ width, height }: SizeInfo) => {
     const freshScrollbarWidth = getScrollBarWidth();
     if (scrollBarWidth !== freshScrollbarWidth) {
       setScrollBarWidth(freshScrollbarWidth);
+    }
+    if (
+      containerSizeInfo.current.height !== height ||
+      containerSizeInfo.current.width !== width
+    ) {
       fetchCanvas();
     }
   };
