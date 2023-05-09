@@ -30,15 +30,16 @@ export default () => (
 
 ## API
 
-| Property   | Type                                                                                      | Default           | Description                                                                 |
-| ---------- | ----------------------------------------------------------------------------------------- | ----------------- | --------------------------------------------------------------------------- |
-| prefixCls  | String                                                                                    | scroll-view-bar   | prefixCls of this component                                                 |
-| trigger    | React.ReactNode                                                                           | scroll navigation | When the mouse hovers over the hover-button, trigger the scroll bar display |
-| delay      | number                                                                                    | 2000              | The delay in first loading the background image                             |
-| trackWidth | number                                                                                    | 160               | scroll-track width                                                          |
-| trackStyle | CSSProperties                                                                             | scroll-view-bar   | customize track style                                                       |
-| thumbStyle | CSSProperties                                                                             | scroll-view-bar   | customize thumb style                                                       |
-| onUpdate   | (value: {top: number;scrollTop: number;scrollHeight: number;clientHeight: number;})=>void |                   | call when scrolling                                                         |
+| Property   | Type                                                                                      | Default           | Description                                                                       |
+| ---------- | ----------------------------------------------------------------------------------------- | ----------------- | --------------------------------------------------------------------------------- |
+| prefixCls  | String                                                                                    | scroll-view-bar   | prefixCls of this component                                                       |
+| trigger    | React.ReactNode                                                                           | scroll navigation | When the mouse hovers over the hover-button, trigger the scroll bar display       |
+| delay      | number                                                                                    | 2000              | The delay in first loading the background image                                   |
+| observable | boolean                                                                                   | false             | Whether to enable content change monitoring for updating the scrollbar background |
+| trackWidth | number                                                                                    | 160               | scroll-track width                                                                |
+| trackStyle | CSSProperties                                                                             | scroll-view-bar   | customize track style                                                             |
+| thumbStyle | CSSProperties                                                                             | scroll-view-bar   | customize thumb style                                                             |
+| onUpdate   | (value: {top: number;scrollTop: number;scrollHeight: number;clientHeight: number;})=>void |                   | call when scrolling                                                               |
 
 ## Development
 
