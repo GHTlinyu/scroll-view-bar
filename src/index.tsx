@@ -1,5 +1,5 @@
 import classNames from 'classnames';
-import html2canvas from 'html2canvas';
+import domtoimage from 'dom-to-image-more';
 import debounce from 'lodash/debounce';
 import ResizeObserver, { SizeInfo } from 'rc-resize-observer';
 import React, {
@@ -94,7 +94,7 @@ const ScrollViewBar = (props: ScrollViewBarProps) => {
     try {
       if (viewWrapperRef.current) {
         //截图
-        const htmlCanvas = await html2canvas(viewWrapperRef.current);
+        const htmlCanvas = await domtoimage.toCanvas(viewWrapperRef.current);
         const ctx = htmlCanvas.getContext('2d', { willReadFrequently: true });
         if (ctx) {
           //让图片模糊显示
